@@ -1,13 +1,12 @@
-
 const express = require("express");
-const dotenv = require('dotenv');
+const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const userRoute = require("./routes/users");
 const authRoute = require("./routes/auth");
 const houseRoute = require("./routes/house");
 
 console.log(`Node env: ${process.NODE_ENV}`);
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   console.log("hahan, not in prod");
   dotenv.config();
 }
@@ -38,8 +37,8 @@ app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/house", houseRoute);
 
-app.listen(process.env.PORT  || 3000, () =>
-  console.log("listening on the port sha or port ")
+app.listen(process.env.PORT || 5000, () =>
+  console.log("listening on the port sha or port 5000")
 );
 
 // process.env.PORT || 5000
