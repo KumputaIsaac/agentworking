@@ -2,11 +2,6 @@ const router = require("express").Router();
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
 
-var validateEmail = function (email) {
-  var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-  return re.test(email);
-};
-
 // register a user
 router.post("/register", async (req, res) => {
   try {
@@ -58,15 +53,12 @@ router.post("/login", async (req, res) => {
         res.status(200).json(user);
       }
     }
-
-    // !user && res.status(404).send("user not found");
-
-    // !validPassword &&
-    // res.status(200).json(user);
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
   }
 });
+
+//admin delete all users and post
 
 module.exports = router;
