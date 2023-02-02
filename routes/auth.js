@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
+const House = require("../models/house");
 
 // register a user
 router.post("/register", async (req, res) => {
@@ -60,5 +61,18 @@ router.post("/login", async (req, res) => {
 });
 
 //admin delete all users and post
+router.delete("/admindelete", async (req, res) => {
+  try {
+    if (!req.body.isAdmin) {
+      throw "not an admin";
+    }
+    console.log("here");
+    await User.deleteMany({});
+    await House.deleteMany({});
+    return res.status(201).json("cleared all database");
+  } catch (error) {
+    res.status(500).json(error);
+  }
+});
 
 module.exports = router;
