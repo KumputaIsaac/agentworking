@@ -5,23 +5,31 @@ const userRoute = require("./routes/users");
 const authRoute = require("./routes/auth");
 const houseRoute = require("./routes/house");
 
-console.log(`Node env: ${process.NODE_ENV}`);
-if (process.env.NODE_ENV !== "production") {
-  console.log("hahan, not in prod");
-  dotenv.config();
-}
+// console.log(`Node env: ${process.NODE_ENV}`);
+// if (process.env.NODE_ENV !== "production") {
+//   console.log("hahan, not in prod");
+//   dotenv.config();
+// }
+
+dotenv.config();
 
 const app = express();
 
 // connect to mongo
+mongoose.set("strictQuery", false);
+
 mongoose.connect(
-  process.env.MONGO_URL,
+  process.env.MONGODB_URI,
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   },
-  () => {
-    console.log("database is connected");
+  (err) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("database is connected");
+    }
   }
 );
 
@@ -37,8 +45,6 @@ app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/house", houseRoute);
 
-app.listen(process.env.PORT || 5000, () =>
-  console.log("listening on the port sha or port 5000")
+app.listen(process.env.PORT, () =>
+  console.log(`listening on port ${process.env.PORT}`)
 );
-
-// process.env.PORT || 5000
