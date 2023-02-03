@@ -8,7 +8,7 @@ const validation = joi.object({
 
 const userValidation = async (req, res, next) => {
   const payload = {
-    userName: req.body.userName,
+    username: req.body.username,
     email: req.body.email,
     password: req.body.password,
   };
