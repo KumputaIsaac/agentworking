@@ -3,12 +3,11 @@ const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const House = require("../models/house");
 const joi = require("joi");
-
-const uservalidation = joi.object({
-  username: joi.string().alphanum().min(3).max(25).trim(true).required(),
-  email: joi.string().email().trim(true).required(),
-  password: joi.string().min(8).trim(true).required(),
-});
+const nodemailer = require("nodemailer");
+const {
+  uservalidation,
+  generateAlphanumeric,
+} = require("./controllers/user/user.validation");
 
 // register a user
 router.post("/register", async (req, res) => {
@@ -27,6 +26,38 @@ router.post("/register", async (req, res) => {
     if (existingUser) {
       throw "User Already Exists";
     }
+
+    // verify the email
+    // create otp
+    const userotp = generateAlphanumeric();
+    // send otp
+    console.log(process.env.user);
+    let mailTransporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.user,
+        pass: process.env.pass,
+      },
+    });
+
+    let mailDetails = {
+      from: "Agent App",
+      to: "kumputaisaac@gmail.com",
+      subject: "Verify your Email",
+      text: "Node.js testing mail for GeeksforGeeks",
+    };
+
+    mailTransporter.sendMail(mailDetails, function (err, data) {
+      if (err) {
+        console.log(err);
+        console.log("Error Occurs");
+      } else {
+        console.log("Email sent successfully");
+      }
+    });
+    return;
+    // store otp
+    // verify otp
 
     // generate a new password
     const salt = await bcrypt.genSalt(10);
@@ -54,21 +85,19 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
-      res.status(404).send("user not found");
-    } else {
-      const validPassword = await bcrypt.compare(
-        req.body.password,
-        user.password
-      );
-      if (!validPassword) {
-        res.status(404).json("wrong password");
-      } else {
-        res.status(200).json(user);
-      }
+      throw "user not found";
     }
+    const validPassword = await bcrypt.compare(
+      req.body.password,
+      user.password
+    );
+
+    if (!validPassword) {
+      throw "wrong username or password, come, you be hacker?";
+    }
+    res.status(200).json(user);
   } catch (error) {
-    console.log(error);
-    res.status(500).json(error);
+    res.status(400).json(error);
   }
 });
 

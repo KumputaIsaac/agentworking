@@ -1,26 +1,25 @@
 const joi = require("joi");
 
-const validation = joi.object({
+const uservalidation = joi.object({
   username: joi.string().alphanum().min(3).max(25).trim(true).required(),
   email: joi.string().email().trim(true).required(),
   password: joi.string().min(8).trim(true).required(),
 });
 
-const userValidation = async (req, res, next) => {
-  const payload = {
-    username: req.body.username,
-    email: req.body.email,
-    password: req.body.password,
-  };
-
-  const { error } = validation.validate(payload);
-  if (error) {
-    res.status(406);
-    return res.json(
-      errorFunction(true, `Error in User Data : ${error.message}`)
-    );
-  } else {
-    next();
+function generateAlphanumeric() {
+  let result = "";
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
+  return result;
+}
+
+const now = () => {
+  console.log("now");
 };
-module.exports = userValidation;
+
+module.exports.uservalidation = uservalidation;
+module.exports.generateAlphanumeric = generateAlphanumeric;
+module.exports.now = now;
