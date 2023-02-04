@@ -53,3 +53,4 @@ const sendingotp = () => {
 module.exports.uservalidation = uservalidation;
 module.exports.generateAlphanumeric = generateAlphanumeric;
 module.exports.sendingotp = sendingotp;
+module.exports;
