@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 var date = new Date();
-date.setHours(date.getMinutes() + 5);
+date.setMinutes(date.getMinutes() + 5);
 
 // now you can get the string
 var isodate = date.toISOString();

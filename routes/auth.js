@@ -97,20 +97,33 @@ router.post("/verify-otp", async (req, res) => {
     const dbotp = await Otp.findOne({
       email: req.body.email,
     });
-    console.log(dbotp);
+
     // get otp from body
     const otpfrombody = req.body.otp;
-    // if thtey re equal, let email to be valid
+    // if thtey re equal,
     if (dbotp.otp != otpfrombody) {
       throw "otp does not match";
     }
 
+    // check if otp is not expired
     const currentTime = new Date().toISOString();
     if (currentTime > dbotp.expiredAt) {
-      console.log("expired");
+      throw " Otp expired";
+
+      // resend otp
+      // change otp in the db
     }
-    // check if otp is not expired
-  } catch (error) {}
+
+    //  let email to be valid
+    const existingUser = await User.findOne({
+      email: req.body.email,
+    });
+
+    await existingUser.updateOne({ $set: { validemail: true } });
+    return res.status(200).json("the user has been validated");
+  } catch (error) {
+    return res.status(400).json(error);
+  }
 });
 
 // login

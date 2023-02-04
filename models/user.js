@@ -19,10 +19,6 @@ const UserSchema = new mongoose.Schema({
     required: true,
     min: 6,
   },
-  otp: {
-    type: String,
-    required: true,
-  },
   created: {
     type: String,
     default: new Date().toISOString(),
