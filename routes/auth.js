@@ -2,12 +2,13 @@ const router = require("express").Router();
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const House = require("../models/house");
-const joi = require("joi");
+// const joi = require("joi");
 const nodemailer = require("nodemailer");
 const {
   uservalidation,
   generateAlphanumeric,
 } = require("./controllers/user/user.validation");
+const { equal } = require("joi");
 
 // register a user
 router.post("/register", async (req, res) => {
@@ -31,7 +32,7 @@ router.post("/register", async (req, res) => {
     // create otp
     const userotp = generateAlphanumeric();
     // send otp
-    console.log(process.env.user);
+
     let mailTransporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -44,20 +45,20 @@ router.post("/register", async (req, res) => {
       from: "Agent App",
       to: "kumputaisaac@gmail.com",
       subject: "Verify your Email",
-      text: "Node.js testing mail for GeeksforGeeks",
+      subject: "Email verification Agent App",
+      html: `<p>You requested for email verification, your otp is
+        <b> ${userotp} </b> link</a> to verify your email address</p>`,
     };
 
     mailTransporter.sendMail(mailDetails, function (err, data) {
       if (err) {
-        console.log(err);
-        console.log("Error Occurs");
+        throw "Error Occurs in sending email";
       } else {
-        console.log("Email sent successfully");
+        throw "Email sent successfully";
       }
     });
-    return;
+
     // store otp
-    // verify otp
 
     // generate a new password
     const salt = await bcrypt.genSalt(10);
@@ -67,6 +68,9 @@ router.post("/register", async (req, res) => {
       username: req.body.username,
       email: req.body.email,
       password: hashedPassword,
+      // send otp to otp db not this db
+      otp: userotp,
+      lastActive: new Date().toISOString(),
     });
 
     if (!newUser) {
@@ -77,6 +81,17 @@ router.post("/register", async (req, res) => {
   } catch (error) {
     return res.status(400).json(error);
   }
+});
+
+// verify otp
+router.post("/verify-otp", async (req, res) => {
+  try {
+    // create otp db
+    // store email, otp , created at , expired at
+    // get otp from db
+    // get otp from body
+    // if thtey re equal, let email to be valid
+  } catch (error) {}
 });
 
 // login
