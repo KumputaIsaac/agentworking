@@ -1,3 +1,4 @@
+const nodemailer = require("nodemailer");
 const joi = require("joi");
 
 const uservalidation = joi.object({
@@ -16,10 +17,39 @@ function generateAlphanumeric() {
   return result;
 }
 
-const now = () => {
-  console.log("now");
+const sendingotp = () => {
+  // create otp
+  const userotp = generateAlphanumeric();
+  // send otp
+
+  let mailTransporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.user,
+      pass: process.env.pass,
+    },
+  });
+
+  let mailDetails = {
+    from: "Agent App",
+    to: "kumputaisaac@gmail.com",
+    subject: "Verify your Email",
+    subject: "Email verification Agent App",
+    html: `<p>You requested for email verification, your otp is
+        <b> ${userotp} </b> link</a> to verify your email address</p>`,
+  };
+
+  mailTransporter.sendMail(mailDetails, function (err, data) {
+    if (err) {
+      throw "Error Occurs in sending email";
+    } else {
+      throw "Email sent successfully";
+    }
+  });
+
+  return userotp;
 };
 
 module.exports.uservalidation = uservalidation;
 module.exports.generateAlphanumeric = generateAlphanumeric;
-module.exports.now = now;
+module.exports.sendingotp = sendingotp;

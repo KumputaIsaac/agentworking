@@ -2,11 +2,11 @@ const router = require("express").Router();
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const House = require("../models/house");
-// const joi = require("joi");
-const nodemailer = require("nodemailer");
+const { expiredAt } = require("./controllers/user/utils");
 const {
   uservalidation,
   generateAlphanumeric,
+  sendingotp,
 } = require("./controllers/user/user.validation");
 const { equal } = require("joi");
 const Otp = require("../models/otp");
@@ -29,35 +29,9 @@ router.post("/register", async (req, res) => {
       throw "User Already Exists";
     }
 
-    // verify the email
-    // create otp
-    const userotp = generateAlphanumeric();
-    // send otp
+    // send otp to the email
 
-    let mailTransporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.user,
-        pass: process.env.pass,
-      },
-    });
-
-    let mailDetails = {
-      from: "Agent App",
-      to: "kumputaisaac@gmail.com",
-      subject: "Verify your Email",
-      subject: "Email verification Agent App",
-      html: `<p>You requested for email verification, your otp is
-        <b> ${userotp} </b> link</a> to verify your email address</p>`,
-    };
-
-    mailTransporter.sendMail(mailDetails, function (err, data) {
-      if (err) {
-        throw "Error Occurs in sending email";
-      } else {
-        throw "Email sent successfully";
-      }
-    });
+    const userotp = sendingotp();
 
     // store otp
     const storeotp = await Otp.create({
@@ -108,10 +82,20 @@ router.post("/verify-otp", async (req, res) => {
     // check if otp is not expired
     const currentTime = new Date().toISOString();
     if (currentTime > dbotp.expiredAt) {
-      throw " Otp expired";
-
       // resend otp
+      const userotp = sendingotp();
+
       // change otp in the db
+
+      const dbotp = await Otp.findOne({
+        email: req.body.email,
+      });
+
+      await dbotp.updateOne({ $set: { otp: userotp, expiredAt: expiredAt() } });
+
+      return res
+        .status(201)
+        .json("Otp expired, a new one has been sent to your email");
     }
 
     //  let email to be valid
