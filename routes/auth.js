@@ -9,6 +9,7 @@ const {
   generateAlphanumeric,
 } = require("./controllers/user/user.validation");
 const { equal } = require("joi");
+const Otp = require("../models/otp");
 
 // register a user
 router.post("/register", async (req, res) => {
@@ -59,6 +60,14 @@ router.post("/register", async (req, res) => {
     });
 
     // store otp
+    const storeotp = await Otp.create({
+      email: req.body.email,
+      otp: userotp,
+    });
+
+    if (!storeotp) {
+      throw "Could not store otp";
+    }
 
     // generate a new password
     const salt = await bcrypt.genSalt(10);
@@ -68,9 +77,6 @@ router.post("/register", async (req, res) => {
       username: req.body.username,
       email: req.body.email,
       password: hashedPassword,
-      // send otp to otp db not this db
-      otp: userotp,
-      lastActive: new Date().toISOString(),
     });
 
     if (!newUser) {
@@ -86,11 +92,24 @@ router.post("/register", async (req, res) => {
 // verify otp
 router.post("/verify-otp", async (req, res) => {
   try {
-    // create otp db
-    // store email, otp , created at , expired at
     // get otp from db
+
+    const dbotp = await Otp.findOne({
+      email: req.body.email,
+    });
+    console.log(dbotp);
     // get otp from body
+    const otpfrombody = req.body.otp;
     // if thtey re equal, let email to be valid
+    if (dbotp.otp != otpfrombody) {
+      throw "otp does not match";
+    }
+
+    const currentTime = new Date().toISOString();
+    if (currentTime > dbotp.expiredAt) {
+      console.log("expired");
+    }
+    // check if otp is not expired
   } catch (error) {}
 });
 
@@ -125,6 +144,7 @@ router.delete("/admindelete", async (req, res) => {
     console.log("here");
     await User.deleteMany({});
     await House.deleteMany({});
+    await Otp.deleteMany({});
     return res.status(201).json("cleared all database");
   } catch (error) {
     res.status(500).json(error);
