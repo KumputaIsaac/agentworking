@@ -5,10 +5,9 @@ const House = require("../models/house");
 const { expiredAt } = require("./controllers/user/utils");
 const {
   uservalidation,
-  generateAlphanumeric,
   sendingotp,
 } = require("./controllers/user/user.validation");
-const { equal } = require("joi");
+
 const Otp = require("../models/otp");
 
 // register a user
@@ -91,7 +90,13 @@ router.post("/verify-otp", async (req, res) => {
         email: req.body.email,
       });
 
-      await dbotp.updateOne({ $set: { otp: userotp, expiredAt: expiredAt() } });
+      const updatethis = await dbotp.updateOne({
+        $set: { otp: userotp, expiredAt: expiredAt() },
+      });
+
+      if (!updatethis) {
+        throw "could not update otp database";
+      }
 
       return res
         .status(201)

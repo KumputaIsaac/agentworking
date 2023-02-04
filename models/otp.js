@@ -1,10 +1,5 @@
 const mongoose = require("mongoose");
-
-var date = new Date();
-date.setMinutes(date.getMinutes() + 5);
-
-// now you can get the string
-var isodate = date.toISOString();
+const { expiredAt } = require("../routes/controllers/user/utils");
 
 const OtpSchema = new mongoose.Schema({
   email: {
@@ -24,7 +19,7 @@ const OtpSchema = new mongoose.Schema({
   },
   expiredAt: {
     type: String,
-    default: isodate,
+    default: expiredAt(),
   },
 });
 
