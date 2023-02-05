@@ -1,8 +1,7 @@
 const router = require("express").Router();
-const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const House = require("../models/house");
-const { expiredAt } = require("./controllers/user/utils");
+const { expiredAt, hashedPassword } = require("./controllers/user/utils");
 const {
   uservalidation,
   sendingotp,
@@ -43,13 +42,12 @@ router.post("/register", async (req, res) => {
     }
 
     // generate a new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+    const hashed = await hashedPassword(req.body.password);
 
     const newUser = await User.create({
       username: req.body.username,
       email: req.body.email,
-      password: hashedPassword,
+      password: hashed,
     });
 
     if (!newUser) {
@@ -115,6 +113,81 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
+//forgot password
+router.post("/forgot-password", async (req, res) => {
+  try {
+    // check if email exjists and is validated
+    const existingUser = await User.findOne({
+      email: req.body.email,
+    });
+
+    if (!existingUser) {
+      throw "User does not exist";
+    }
+
+    if (!existingUser.validemail) {
+      throw "validate your email";
+    }
+
+    // send otp to email,
+    const userotp = sendingotp();
+
+    // update new otp to otp db
+
+    // change otp in the db
+
+    const dbotp = await Otp.findOne({
+      email: req.body.email,
+    });
+
+    const updatethis = await dbotp.updateOne({
+      $set: { otp: userotp, expiredAt: expiredAt() },
+    });
+
+    if (!updatethis) {
+      throw "could not update otp database";
+    }
+
+    return res.status(201).json("updated");
+
+    // update new pssword
+
+    // check if body otp is thesame with otp
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+});
+
+router.post("/change-password", async (req, res) => {
+  try {
+    const dbotp = await Otp.findOne({
+      email: req.body.email,
+    });
+
+    if (dbotp.otp != req.body.otp) {
+      throw "invalid otp";
+    }
+
+    const newpassword = req.body.newpassword;
+    const hashed = await hashedPassword(newpassword);
+
+    const user = await User.findOne({
+      email: req.body.email,
+    });
+
+    const updatethis = await user.updateOne({
+      $set: { password: hashed },
+    });
+    if (!updatethis) {
+      throw "could not update password";
+    }
+
+    return res.status(202).json("password changed");
+  } catch (error) {
+    return res.status(400).json(error);
+  }
+});
+
 // login
 router.post("/login", async (req, res) => {
   try {
@@ -123,6 +196,11 @@ router.post("/login", async (req, res) => {
     if (!user) {
       throw "user not found";
     }
+
+    if (!user.validemail) {
+      throw "validate your email first";
+    }
+
     const validPassword = await bcrypt.compare(
       req.body.password,
       user.password
@@ -131,6 +209,7 @@ router.post("/login", async (req, res) => {
     if (!validPassword) {
       throw "wrong username or password, come, you be hacker?";
     }
+
     res.status(200).json(user);
   } catch (error) {
     res.status(400).json(error);
