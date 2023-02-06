@@ -7,6 +7,15 @@ const uservalidation = joi.object({
   password: joi.string().min(8).trim(true).required(),
 });
 
+const validatenewpassword = joi.object({
+  newpassword: joi.string().min(8).trim(true).required(),
+});
+
+const loginvalidation = joi.object({
+  email: joi.string().email().trim(true).required(),
+  password: joi.string().min(8).trim(true).required(),
+});
+
 function generateAlphanumeric() {
   let result = "";
   const characters =
@@ -51,5 +60,7 @@ const sendingotp = () => {
 };
 
 module.exports.uservalidation = uservalidation;
+module.exports.validatenewpassword = validatenewpassword;
+module.exports.loginvalidation = loginvalidation;
 module.exports.generateAlphanumeric = generateAlphanumeric;
 module.exports.sendingotp = sendingotp;

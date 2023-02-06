@@ -1,9 +1,15 @@
 const router = require("express").Router();
 const User = require("../models/user");
 const House = require("../models/house");
-const { expiredAt, hashedPassword } = require("./controllers/user/utils");
+const {
+  expiredAt,
+  hashedPassword,
+  validPassword,
+} = require("./controllers/user/utils");
 const {
   uservalidation,
+  validatenewpassword,
+  loginvalidation,
   sendingotp,
 } = require("./controllers/user/user.validation");
 
@@ -169,6 +175,13 @@ router.post("/change-password", async (req, res) => {
     }
 
     const newpassword = req.body.newpassword;
+
+    // use joi to chceck if input is correct
+    const { error, value } = validatenewpassword.validate(req.body.password);
+    if (error) {
+      throw error.details[0].message;
+    }
+
     const hashed = await hashedPassword(newpassword);
 
     const user = await User.findOne({
@@ -178,6 +191,7 @@ router.post("/change-password", async (req, res) => {
     const updatethis = await user.updateOne({
       $set: { password: hashed },
     });
+
     if (!updatethis) {
       throw "could not update password";
     }
@@ -191,6 +205,12 @@ router.post("/change-password", async (req, res) => {
 // login
 router.post("/login", async (req, res) => {
   try {
+    // use joi to chceck if input is correct
+    const { error, value } = loginvalidation.validate(req.body);
+    if (error) {
+      throw error.details[0].message;
+    }
+
     const user = await User.findOne({ email: req.body.email });
 
     if (!user) {
@@ -201,18 +221,18 @@ router.post("/login", async (req, res) => {
       throw "validate your email first";
     }
 
-    const validPassword = await bcrypt.compare(
-      req.body.password,
-      user.password
-    );
+    const validatedpassword = await validPassword({
+      bodypassword: req.body.password,
+      dbpassword: user.password,
+    });
 
-    if (!validPassword) {
+    if (!validatedpassword) {
       throw "wrong username or password, come, you be hacker?";
     }
 
-    res.status(200).json(user);
+    return res.status(200).json(user);
   } catch (error) {
-    res.status(400).json(error);
+    return res.status(400).json(error);
   }
 });
 
