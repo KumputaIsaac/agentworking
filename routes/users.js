@@ -1,56 +1,73 @@
 const router = require("express").Router();
 const User = require("../models/user.js");
 const bcrypt = require("bcrypt");
+const { hashedPassword } = require("./controllers/user/utils.js");
+const {
+  validatenewpassword,
+} = require("./controllers/user/user.validation.js");
 
 // get a user
 router.get("/", async (req, res) => {
-  const userId = req.query.userId;
-  const username = req.query.username;
   try {
+    const userId = req.query.userId;
+    const username = req.query.username;
+
     const user = userId
       ? await User.findById(userId)
       : await User.findOne({ username: username });
+
+    if (!user) {
+      throw " user does not exist";
+    }
+
     return res.status(200).json(user);
   } catch (error) {
-    return res.status(500).json(error);
+    return res.status(400).json(error);
   }
 });
 
 // update a user
 router.put("/:id", async (req, res) => {
-  if (req.body.userId === req.params.id || req.body.isAdmin) {
+  try {
+    if (req.body.userId !== req.params.id || !req.body.isAdmin) {
+      throw "unauthorized to update user";
+    }
+
+    // change password
     if (req.body.password) {
-      try {
-        const salt = await bcrypt.genSalt(10);
-        req.body.password = await bcrypt.hash(req.body.password, salt);
-      } catch (err) {
-        res.status(500).json(err);
-      }
+      validatenewpassword.validate(req.body.password);
+      req.body.password = await hashedPassword(req.body.password);
     }
-    try {
-      const user = await User.findByIdAndUpdate(req.params.id, {
-        $set: req.body,
-      });
-      res.status(200).json("account has been updated");
-    } catch (error) {
-      res.status(500).json(error);
+
+    // update user
+    const user = await User.findByIdAndUpdate(req.params.id, {
+      $set: req.body,
+    });
+
+    if (!user) {
+      throw "no user";
     }
-  } else {
-    return res.status(403).json("you can only update your account");
+
+    return res.status(200).json("account has been updated");
+  } catch (error) {
+    res.status(500).json(error);
   }
 });
 
 // delete a user
 router.delete("/:id", async (req, res) => {
-  if (req.body.userId === req.params.id || req.body.isAdmin) {
-    try {
-      const user = await User.findByIdAndDelete(req.params.id);
-      res.status(200).json("account has been deleted");
-    } catch (error) {
-      res.status(500).json(error);
+  try {
+    if (req.body.userId !== req.params.id || !req.body.isAdmin) {
+      throw "unauthorized to delete this account";
     }
-  } else {
-    return res.status(403).json("you can delete only your account");
+
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      throw "user does not exist";
+    }
+  } catch (error) {
+    return res.status(403).json(error);
   }
 });
 

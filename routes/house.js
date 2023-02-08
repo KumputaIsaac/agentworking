@@ -6,7 +6,6 @@ const User = require("../models/user");
 router.get("/", async (req, res) => {
   try {
     const allPost = await House.find();
-    console.log("here");
     res.json(allPost);
   } catch (error) {
     res.send("theres something wrong g");
